@@ -1,0 +1,58 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var roi = 
+    /* color: #98ff00 */
+    /* shown: false */
+    /* locked: true */
+    ee.Geometry.Point([-43.75475793445217, -4.156179649017387]),
+    roi2 = /* color: #d63000 */ee.Geometry.MultiPoint();
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var dataset = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+    .filterDate('2016-08-01', '2016-08-31')
+    .filterBounds(roi);
+    // .sort('CLOUD_COVER')
+    // .first();
+    
+
+    
+// Applies scaling factors.
+function applyScaleFactors(image) {
+  var opticalBands = image.select('SR_B.').multiply(0.0000275).add(-0.2);
+  var thermalBands = image.select('ST_B.*').multiply(0.00341802).add(149.0);
+  return image.addBands(opticalBands, null, true)
+              .addBands(thermalBands, null, true);
+}
+
+dataset = dataset.map(applyScaleFactors);
+
+print("No. of images in collection: ", dataset.size())
+
+var image = dataset.first();
+//var image = dataset.sort('CLOUD_COVER').first();
+
+var visualization = {
+  bands: ['SR_B4', 'SR_B3', 'SR_B2'],
+  min: 0.0,
+  max: 0.3,
+  gamma:1.4
+};
+
+// Map.setCenter(-114.2579, 38.9275, 8);
+
+// Map.addLayer(image.clip(roi2), visualization, 'Manipur_Landsat');
+
+Map.addLayer(dataset, visualization, 'Brazil_Landsat');
+
+Map.centerObject(roi, 7);
+
+
+// var dataset1 = dataset.select('B.+')
+
+print(image);
+
+Export.image.toDrive({
+  image: image,
+  description: 'Landsat_Brazil_2016',
+  scale: 30,
+  region: image.geometry(),
+  maxPixels: 1e13
+});
